@@ -1,44 +1,53 @@
-import os
-from databricks import sql
-from databricks.sdk.core import Config
 import streamlit as st
-import pandas as pd
-
+import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
-# Ensure environment variable is set correctly
-assert os.getenv('DATABRICKS_WAREHOUSE_ID'), "DATABRICKS_WAREHOUSE_ID must be set in app.yaml."
+st.set_page_config(layout="wide", page_title="Business Intelligence Systems")
 
-def sqlQuery(query: str) -> pd.DataFrame:
-    cfg = Config() # Pull environment variables for auth
-    with sql.connect(
-        server_hostname=cfg.host,
-        http_path=f"/sql/1.0/warehouses/{os.getenv('DATABRICKS_WAREHOUSE_ID')}",
-        credentials_provider=lambda: cfg.authenticate
-    ) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(query)
-            return cursor.fetchall_arrow().to_pandas()
+st.title("🏦 Business Intelligence Systems")
+st.markdown("### Willkommen! Bitte wählen Sie einen Bereich:")
 
-st.set_page_config(layout="wide")
+st.divider()
 
-@st.cache_data(ttl=30)  # only re-query if it's been 30 seconds
-def getData():
-    # This example query depends on the nyctaxi data set in Unity Catalog, see https://docs.databricks.com/en/discover/databricks-datasets.html for details
-    return sqlQuery("select * from samples.nyctaxi.trips limit 5000")
+# Custom CSS for the large tiles
+st.markdown("""
+<style>
+div.row-widget.stButton > button {
+    width: 100%;
+    height: 150px;
+    font-size: 20px;
+}
+</style>
+""", unsafe_allow_html=True)
 
-data = getData()
+col1, col2, col3 = st.columns(3)
 
-st.header("Taxi fare distribution !!! :)")
-col1, col2 = st.columns([3, 1])
 with col1:
-    st.scatter_chart(data=data, height=400, width=700, y="fare_amount", x="trip_distance")
-with col2:
-    st.subheader("Predict fare")
-    pickup = st.text_input("From (zipcode)", value="10003")
-    dropoff = st.text_input("To (zipcode)", value="11238")
-    d = data[(data['pickup_zip'] == int(pickup)) & (data['dropoff_zip'] == int(dropoff))]
-    st.write(f"# **${d['fare_amount'].mean() if len(d) > 0 else 99:.2f}**")
+    st.image("https://img.icons8.com/color/480/groups.png", width=100)
+    st.page_link("pages/01_Kunden_Dashboard.py", label="Kunden Dashboard", icon="👥", use_container_width=True)
+    st.caption("Demographics & Card Portfolio")
 
-st.dataframe(data=data, height=600, use_container_width=True)
+with col2:
+    st.image("https://img.icons8.com/color/480/transaction-list.png", width=100)
+    st.page_link("pages/02_Transaktionen_Dashboard.py", label="Transaktionen Dashboard", icon="💳", use_container_width=True)
+    st.caption("Financial Metrics & Trends")
+
+with col3:
+    st.image("https://img.icons8.com/color/480/customer-support.png", width=100)
+    st.page_link("pages/03_CRM_Dashboard.py", label="CRM Dashboard", icon="📞", use_container_width=True)
+    st.caption("Support & Complaints")
+
+st.divider()
+
+col4, col5, col6 = st.columns(3)
+
+with col4:
+    st.page_link("pages/03_SimpleChat.py", label="💬 Simple Chat", icon="💬", use_container_width=True)
+
+with col5:
+    st.page_link("pages/04_GenieAI.py", label="🧞 Genie AI", icon="🧞", use_container_width=True)
+
+with col6:
+    st.page_link("pages/05_Databricks_Dashboard.py", label="📊 Existing Dashboard", icon="📊", use_container_width=True)
